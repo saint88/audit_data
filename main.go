@@ -16,7 +16,7 @@ import (
 
 var creds = &mytracker.UserCreds{
 	APIUserId: "11111",
-	SecretKey: "22222222222222222222222",
+	SecretKey: "22222222222222222",
 }
 
 var countriesDic = map[string]string {
@@ -222,7 +222,6 @@ func getCreateDataRequest(fromDate time.Time, toDate time.Time, country int, sdk
 	params = append(params, fmt.Sprintf("SDKKey=%s", sdkKeyApp))
 	params = append(params, fmt.Sprintf("event=%s", event))
 	params = append(params, fmt.Sprintf("idCountry=%d", country))
-	//params = append(params, fmt.Sprintf("event=%s", event))
 	params = append(params, fmt.Sprintf("selectors=idDevice"))
 
 	for _, k := range m.Keys() {
