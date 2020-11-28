@@ -49,5 +49,11 @@ func GetAuditStatFromArchive(path string) int {
 		check(err)
 	}()
 
-	return len(s) - 1
+	s = s[1:]
+	set := make(map[string]bool)
+	for _, id := range s {
+		set[id] = true
+	}
+
+	return len(set)
 }

@@ -15,8 +15,8 @@ import (
 )
 
 var creds = &mytracker.UserCreds{
-	APIUserId: "1111111",
-	SecretKey: "22222222",
+	APIUserId: "11111",
+	SecretKey: "22222222222222222222222",
 }
 
 var countriesDic = map[string]string {
@@ -128,8 +128,10 @@ func getDataFromTracker(rfOnly *bool) []*app {
 		countries["by"] = 201
 	}
 
-	fromDate := time.Date(2019, 1, 1, 0, 0, 0, 0, time.UTC)
-	toDate := time.Date(2019, 12, 31, 23, 59, 59, 0, time.UTC)
+	loc, _ := time.LoadLocation("Europe/Moscow")
+
+	fromDate := time.Date(2019, 1, 1, 0, 0, 0, 0, loc)
+	toDate := time.Date(2019, 12, 31, 23, 59, 59, 0, loc)
 
 	var apps []*app
 	fmt.Println()
@@ -197,6 +199,7 @@ func getDataFromTop(rfOnly *bool) (map[string]int, int) {
 		fmt.Println(fmt.Sprintf("%s: %d", countriesDic["ru"], top["ru"]))
 		total += top["ru"]
 	} else {
+		fmt.Println("Получаем аудиторные показатели из сервиса https://top.mail.ru для России")
 		for k := range countriesDic {
 			fmt.Println(fmt.Sprintf("%s: %d", countriesDic[k], top[k]))
 			total += top[k]
@@ -219,7 +222,8 @@ func getCreateDataRequest(fromDate time.Time, toDate time.Time, country int, sdk
 	params = append(params, fmt.Sprintf("SDKKey=%s", sdkKeyApp))
 	params = append(params, fmt.Sprintf("event=%s", event))
 	params = append(params, fmt.Sprintf("idCountry=%d", country))
-	params = append(params, fmt.Sprintf("selectors=dtEvent"))
+	//params = append(params, fmt.Sprintf("event=%s", event))
+	params = append(params, fmt.Sprintf("selectors=idDevice"))
 
 	for _, k := range m.Keys() {
 		v, _ := m.Get(k)
