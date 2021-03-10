@@ -49,6 +49,8 @@ func main() {
 	rfOnly := flag.Bool("rf-only", false, "Получаем данные только по России")
 	help := flag.Bool("help", false, "Помощь по работе со скриптом")
 
+	year := flag.Int("year", time.Now().Year() - 1, "Год за который нужно собрать аудиторские метрики")
+
 	flag.Parse()
 
 	if *help {
@@ -63,7 +65,7 @@ func main() {
 	}
 
 	var apps []*app
-	for _, app := range getDataFromTracker(rfOnly) {
+	for _, app := range getDataFromTracker(rfOnly, year) {
 		stat := make(map[string]int)
 		for r, f := range app.Files {
 			val := 0
@@ -120,7 +122,7 @@ func main() {
 	fmt.Println("Готово!")
 }
 
-func getDataFromTracker(rfOnly *bool) []*app {
+func getDataFromTracker(rfOnly *bool, year *int) []*app {
 	countries := map[string]int{"ru": 188}
 	if !*rfOnly {
 		countries["kz"] = 28
@@ -130,8 +132,8 @@ func getDataFromTracker(rfOnly *bool) []*app {
 
 	loc, _ := time.LoadLocation("Europe/Moscow")
 
-	fromDate := time.Date(2019, 1, 1, 0, 0, 0, 0, loc)
-	toDate := time.Date(2019, 12, 31, 23, 59, 59, 0, loc)
+	fromDate := time.Date(*year, 1, 1, 0, 0, 0, 0, loc)
+	toDate := time.Date(*year, 12, 31, 23, 59, 59, 0, loc)
 
 	var apps []*app
 	fmt.Println()
