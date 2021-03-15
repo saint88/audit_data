@@ -71,6 +71,8 @@ func main() {
 		"Имя приложения по которому будет собираться статистика. Параметр Обязательный.")
 	help := flag.Bool("help", false, "Помощь по работе со скриптом")
 
+	year := flag.Int("year", time.Now().Year() - 1, "Год за который нужно собрать аудиторские метрики")
+
 	flag.Parse()
 
 	if *appName == "" {
@@ -97,7 +99,7 @@ func main() {
 	}
 
 	var apps []*app
-	for _, app := range getDataFromTracker(rfOnly, *appName) {
+	for _, app := range getDataFromTracker(rfOnly, year, *appName) {
 		stat := make(map[string]int)
 		for r, f := range app.Files {
 			val := 0
@@ -154,7 +156,7 @@ func main() {
 	fmt.Println("Готово!")
 }
 
-func getDataFromTracker(rfOnly *bool, appName string) []*app {
+func getDataFromTracker(rfOnly *bool, year *int, appName string) []*app {
 	countries := map[string]int{"ru": 188}
 	if !*rfOnly {
 		countries["kz"] = 28
@@ -164,15 +166,15 @@ func getDataFromTracker(rfOnly *bool, appName string) []*app {
 
 	loc, _ := time.LoadLocation("Europe/Moscow")
 
-	fromDate := time.Date(2019, 1, 1, 0, 0, 0, 0, loc)
-	toDate := time.Date(2019, 12, 31, 23, 59, 59, 0, loc)
+	fromDate := time.Date(*year, 1, 1, 0, 0, 0, 0, loc)
+	toDate := time.Date(*year, 12, 31, 23, 59, 59, 0, loc)
 
 	var apps []*app
 	fmt.Println()
 
 	for _, app := range applications[appName] {
 		reportFiles := make(map[string][]*mytracker.File)
-		fmt.Println(fmt.Sprintf("Собираем аудиторские данные для приложения %s для %s", app.Header, app.Type))
+		fmt.Println(fmt.Sprintf("Собираем аудиторские данные для приложения %s для %s за %d год", app.Header, app.Type, *year))
 		for k, v := range countries {
 			idRaw := getCreateDataRequest(fromDate, toDate, v, app.SDKKey).IdRawExport
 
