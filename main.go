@@ -32,24 +32,58 @@ type app struct {
 	SDKKey string
 	Files map[string][]*mytracker.File
 	Stat map[string]int
+	Header string
 }
 
-var applications = []*app{{
-	Type:   "Android",
-	SDKKey: "06906500589285095554",
-
-}, {
-	Type:   "IOS",
-	SDKKey: "04793432430918284626",
-}}
+var applications = map[string][]*app{
+	"news": {
+		{
+			Type:   "Android",
+			SDKKey: "06906500589285095554",
+			Header: "Новости Mail.ru",
+		},
+		{
+			Type:   "IOS",
+			SDKKey: "04793432430918284626",
+			Header: "Новости Mail.ru",
+		},
+	},
+	"pharma": {
+		{
+			Type:   "Android",
+			SDKKey: "14780298541803532537",
+			Header: "Все Аптеки: Поиск лекарств онлайн",
+		},
+		{
+			Type:   "IOS",
+			SDKKey: "84794960176561051381",
+			Header: "Все Аптеки: Поиск лекарств!",
+		},
+	},
+}
 
 func main() {
-	fmt.Println("====== Сборщик аудиторных показателей приложения Новости Mail.ru Group ======")
+	fmt.Println("====== Сборщик аудиторных показателей приложений медиапроектов ======")
 	trackerOnly := flag.Bool("tracker-only", false, "Получаем данные только из https://tracker.my.org")
 	rfOnly := flag.Bool("rf-only", false, "Получаем данные только по России")
+
+	appName := flag.String("app", "",
+		"Имя приложения по которому будет собираться статистика. Параметр Обязательный.")
 	help := flag.Bool("help", false, "Помощь по работе со скриптом")
 
 	flag.Parse()
+
+	if *appName == "" {
+		flag.Usage()
+		fmt.Println("Ошибка: Имя приложения для которого собирается статистика не указано")
+
+		fmt.Println("\nСписок поддерживаемых приложений:")
+		for name := range applications {
+			fmt.Println("-> " + name)
+		}
+
+		os.Exit(1)
+	}
 
 	if *help {
 		flag.Usage()
@@ -59,17 +93,17 @@ func main() {
 	var top = make(map[string]int)
 	totalTop := 0
 	if !*trackerOnly {
-		top, totalTop = getDataFromTop(rfOnly)
+		top, totalTop = getDataFromTop(rfOnly, *appName)
 	}
 
 	var apps []*app
-	for _, app := range getDataFromTracker(rfOnly) {
+	for _, app := range getDataFromTracker(rfOnly, *appName) {
 		stat := make(map[string]int)
 		for r, f := range app.Files {
 			val := 0
 			for _, v := range f {
-				msgTemplate := "Загружаем готовый отчет с https://tracker.my.ru о приложении Новости Mail.ru для региона %s и платформы %s"
-				fmt.Println(fmt.Sprintf(msgTemplate, countriesDic[r], app.Type))
+				msgTemplate := "Загружаем готовый отчет с https://tracker.my.ru о приложении %s для региона %s и платформы %s"
+				fmt.Println(fmt.Sprintf(msgTemplate, app.Header, countriesDic[r], app.Type))
 
 				path := fmt.Sprintf("./%s_%s.csv.gz", strings.ToLower(app.Type), r)
 				err := io.DownloadFile(path, v.Link)
@@ -92,7 +126,7 @@ func main() {
 	totalAllPlatforms := 0
 	for _, app := range apps {
 		total := 0
-		fmt.Println(fmt.Sprintf("Статистика для приложение Новости Mail.ru на платформе %s:", app.Type))
+		fmt.Println(fmt.Sprintf("Статистика для приложение %s на платформе %s:", app.Header, app.Type))
 		for k, v := range app.Stat {
 			fmt.Println(fmt.Sprintf("%s: %d", countriesDic[k], v))
 
@@ -109,8 +143,8 @@ func main() {
 		}
 
 		totalAllPlatforms += total
-		fmt.Println(fmt.Sprintf("Общее количество активности из https://tracker.my.ru для приложение Новости Mail.ru на платформе %s: %d", app.Type, total))
-		fmt.Println(fmt.Sprintf("Активности со всех источников для приложение Новости Mail.ru на платформе %s: %d", app.Type, allRegions))
+		fmt.Println(fmt.Sprintf("Общее количество активности из https://tracker.my.ru для приложение %s на платформе %s: %d", app.Header, app.Type, total))
+		fmt.Println(fmt.Sprintf("Активности со всех источников для приложение %s на платформе %s: %d", app.Header, app.Type, allRegions))
 	}
 
 	fmt.Println()
@@ -120,7 +154,7 @@ func main() {
 	fmt.Println("Готово!")
 }
 
-func getDataFromTracker(rfOnly *bool) []*app {
+func getDataFromTracker(rfOnly *bool, appName string) []*app {
 	countries := map[string]int{"ru": 188}
 	if !*rfOnly {
 		countries["kz"] = 28
@@ -135,9 +169,10 @@ func getDataFromTracker(rfOnly *bool) []*app {
 
 	var apps []*app
 	fmt.Println()
-	for _, app := range applications {
+
+	for _, app := range applications[appName] {
 		reportFiles := make(map[string][]*mytracker.File)
-		fmt.Println(fmt.Sprintf("Собираем аудиторские данные для приложения Новости Mail.ru для %s", app.Type))
+		fmt.Println(fmt.Sprintf("Собираем аудиторские данные для приложения %s для %s", app.Header, app.Type))
 		for k, v := range countries {
 			idRaw := getCreateDataRequest(fromDate, toDate, v, app.SDKKey).IdRawExport
 
@@ -190,7 +225,7 @@ func getReportFiles(idRaw string) []*mytracker.File {
 	return resp.Data.Files
 }
 
-func getDataFromTop(rfOnly *bool) (map[string]int, int) {
+func getDataFromTop(rfOnly *bool, appName string) (map[string]int, int) {
 	top := top.GetAuditMetrics()
 
 	total := 0
@@ -206,7 +241,7 @@ func getDataFromTop(rfOnly *bool) (map[string]int, int) {
 		}
 	}
 
-	fmt.Println(fmt.Sprintf("Общее количество активности по всем странам для приложения Новости Mail.Ru: %d", total))
+	fmt.Println(fmt.Sprintf("Общее количество активности по всем странам для приложения %s: %d", appName, total))
 
 	return top, total
 }

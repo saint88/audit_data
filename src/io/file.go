@@ -43,7 +43,7 @@ func GetAuditStatFromArchive(path string) int {
 	dat, err := ioutil.ReadAll(gr)
 	check(err)
 
-	s := strings.Split(string(dat), "\n")
+	s := strings.Split(strings.Trim(string(dat), " "), "\n")
 	defer func() {
 		err := os.RemoveAll(path)
 		check(err)
