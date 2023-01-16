@@ -24,7 +24,7 @@ func GetAuditMetrics() map[string]int {
 	b, err := ioutil.ReadAll(resp.Body)
 	check(err)
 
-	auditInfo := make(map[string] int)
+	auditInfo := make(map[string]int)
 
 	metrics := strings.Split(strings.TrimSpace(string(b)), "\n")
 	for _, metric := range metrics {
