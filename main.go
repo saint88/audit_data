@@ -1,25 +1,26 @@
 package main
 
 import (
-	"AuditNews/src/io"
+	"github.com/saint88/audit_data/pgk/io"
 	"strings"
 
-	"AuditNews/src/mytracker"
-	"AuditNews/src/top"
 	"flag"
 	"fmt"
 	"github.com/elliotchance/orderedmap"
+	"github.com/saint88/audit_data/pgk/mytracker"
+	"github.com/saint88/audit_data/pgk/top"
 	"os"
 	"strconv"
 	"time"
 )
 
+// Replace credentials to actual before run
 var creds = &mytracker.UserCreds{
 	APIUserId: "11111",
 	SecretKey: "22222222222222222",
 }
 
-var countriesDic = map[string]string {
+var countriesDic = map[string]string{
 	"ru": "Россия",
 	"am": "Армения",
 	"by": "Белоруссия",
@@ -28,10 +29,10 @@ var countriesDic = map[string]string {
 }
 
 type app struct {
-	Type string
+	Type   string
 	SDKKey string
-	Files map[string][]*mytracker.File
-	Stat map[string]int
+	Files  map[string][]*mytracker.File
+	Stat   map[string]int
 	Header string
 }
 
@@ -45,6 +46,18 @@ var applications = map[string][]*app{
 		{
 			Type:   "IOS",
 			SDKKey: "04793432430918284626",
+			Header: "Новости Mail.ru",
+		},
+	},
+	"newsV2": {
+		{
+			Type:   "Android",
+			SDKKey: "59274987045419690955",
+			Header: "Новости Mail.ru",
+		},
+		{
+			Type:   "IOS",
+			SDKKey: "27974421725893446250",
 			Header: "Новости Mail.ru",
 		},
 	},
@@ -71,7 +84,7 @@ func main() {
 		"Имя приложения по которому будет собираться статистика. Параметр Обязательный.")
 	help := flag.Bool("help", false, "Помощь по работе со скриптом")
 
-	year := flag.Int("year", time.Now().Year() - 1, "Год за который нужно собрать аудиторские метрики")
+	year := flag.Int("year", time.Now().Year()-1, "Год за который нужно собрать аудиторские метрики")
 
 	flag.Parse()
 
@@ -106,6 +119,7 @@ func main() {
 			for _, v := range f {
 				msgTemplate := "Загружаем готовый отчет с https://tracker.my.ru о приложении %s для региона %s и платформы %s"
 				fmt.Println(fmt.Sprintf(msgTemplate, app.Header, countriesDic[r], app.Type))
+				fmt.Println("Download from", v.Link)
 
 				path := fmt.Sprintf("./%s_%s.csv.gz", strings.ToLower(app.Type), r)
 				err := io.DownloadFile(path, v.Link)
@@ -128,7 +142,7 @@ func main() {
 	totalAllPlatforms := 0
 	for _, app := range apps {
 		total := 0
-		fmt.Println(fmt.Sprintf("Статистика для приложение %s на платформе %s:", app.Header, app.Type))
+		fmt.Println(fmt.Sprintf("Статистика https://tracker.my.ru для приложение %s на платформе %s:", app.Header, app.Type))
 		for k, v := range app.Stat {
 			fmt.Println(fmt.Sprintf("%s: %d", countriesDic[k], v))
 
@@ -137,21 +151,28 @@ func main() {
 
 		fmt.Println()
 
-		allRegions := 0
-		for k, v := range app.Stat {
-			allRegions = top[k] + v
+		totalAllPlatforms += total
 
-			total += v
+		fmt.Println(fmt.Sprintf("Общее количество активности из https://tracker.my.ru для приложение %s на платформе %s: %d", app.Header, app.Type, total))
+
+		// Если с top.mail.ru
+		if !*trackerOnly {
+			allRegions := 0
+			for k, v := range app.Stat {
+				allRegions += top[k] + v
+			}
+			fmt.Println(fmt.Sprintf("Активности со всех источников (https://top.mail.ru + https://tracker.my.ru) для приложение %s на платформе %s: %d", app.Header, app.Type, allRegions))
 		}
 
-		totalAllPlatforms += total
-		fmt.Println(fmt.Sprintf("Общее количество активности из https://tracker.my.ru для приложение %s на платформе %s: %d", app.Header, app.Type, total))
-		fmt.Println(fmt.Sprintf("Активности со всех источников для приложение %s на платформе %s: %d", app.Header, app.Type, allRegions))
+		fmt.Println()
+		fmt.Println()
 	}
 
 	fmt.Println()
 	fmt.Println(fmt.Sprintf("Всего активности на всех платформах из https://tracker.my.ru: %d", totalAllPlatforms))
-	fmt.Println(fmt.Sprintf("Всего активности из всех источников на всех платформах: %d", totalAllPlatforms + totalTop))
+	if !*trackerOnly {
+		fmt.Println(fmt.Sprintf("Всего активности из всех источников (https://top.mail.ru + https://tracker.my.ru) на всех платформах: %d", totalAllPlatforms+totalTop))
+	}
 	fmt.Println()
 	fmt.Println("Готово!")
 }

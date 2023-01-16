@@ -22,51 +22,51 @@ type UserCreds struct {
 }
 
 type Url struct {
-	Url string
+	Url    string
 	Method string
 	Params []string
 }
 
 type CreateReport struct {
-	Url *Url
-	Creds *UserCreds
-	SDKKey []string
+	Url       *Url
+	Creds     *UserCreds
+	SDKKey    []string
 	IdCountry []string
-	Event string
+	Event     string
 	Selectors []string
-	DateFrom string
-	DateTo string
+	DateFrom  string
+	DateTo    string
 }
 
 type GetReport struct {
-	Url *Url
-	Creds *UserCreds
+	Url         *Url
+	Creds       *UserCreds
 	IdRawExport string
 }
 
 type GetResp struct {
-	Code int `json:"code"`
-	Message string `json:"message"`
-	Data *ReportData `json:"data"`
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    *ReportData `json:"data"`
 }
 
 type CreateResp struct {
-	Code int `json:"code"`
-	Message string `json:"message"`
+	Code       int         `json:"code"`
+	Message    string      `json:"message"`
 	ReportData *ReportData `json:"data"`
 }
 
 type ReportData struct {
-	IdRawExport string `json:"idRawExport"`
-	Status string `json:"status"`
-	ErrorMessage string `json:"errorMessage"`
-	Progress string `json:"progress"`
-	IsCancellable bool `json:"isCancellable"`
-	Files []*File `json:"files"`
+	IdRawExport   string  `json:"idRawExport"`
+	Status        string  `json:"status"`
+	ErrorMessage  string  `json:"errorMessage"`
+	Progress      string  `json:"progress"`
+	IsCancellable bool    `json:"isCancellable"`
+	Files         []*File `json:"files"`
 }
 
 type File struct {
-	Link string `json:"link"`
+	Link      string `json:"link"`
 	Timestamp string `json:"timestampExpires"`
 }
 
